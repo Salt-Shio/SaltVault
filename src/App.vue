@@ -2,29 +2,31 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useVfsStore } from '@/stores/vfs'
 import LightningCursor from '@/components/ui/LightningCursor.vue'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const vfsStore = useVfsStore()
 
 // 使用 Pinia store 的真實登入狀態
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 
 const logout = () => {
   authStore.logout()
+  vfsStore.clearState()
   router.push('/')
 }
 
 // 根據路由名稱來決定要顯示的中文麵包屑
 const currentRouteName = computed(() => {
   const nameMap: Record<string, string> = {
-    'Home': '主頁',
-    'Login': '登入',
-    'Register': '註冊',
-    'FileExplorer': '檔案系統',
-    'Config': '設定',
-    'Settings': '設定',
+    'home': '主頁',
+    'login': '登入',
+    'register': '註冊',
+    'explorer': '檔案系統',
+    'settings': '設定',
   }
   return route.name && typeof route.name === 'string' ? (nameMap[route.name] || route.name) : ''
 })

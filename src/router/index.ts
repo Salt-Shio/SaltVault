@@ -34,7 +34,10 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  
+
+  // 帶著舊 token 進站時，先等後端驗證完成，避免 token 已失效卻先放行閃進受保護頁面
+  await authStore.ensureAuthReady()
+
   // Public pages that do not require authentication
   const publicPages = ['/login', '/register', '/']
   const authRequired = !publicPages.includes(to.path)

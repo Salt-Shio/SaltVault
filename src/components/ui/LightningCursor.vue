@@ -43,49 +43,6 @@ interface Point {
 
 const points: Point[] = [];
 
-// 繪製樹狀分岔
-const drawBranch = (ctx: CanvasRenderingContext2D, startX: number, startY: number, angle: number, length: number, depth: number, opacity: number) => {
-  if (depth === 0 || length < 5) return;
-  
-  const endX = startX + Math.cos(angle) * length;
-  const endY = startY + Math.sin(angle) * length;
-  
-  const dx = endX - startX;
-  const dy = endY - startY;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  const segments = Math.max(1, Math.floor(dist / CONFIG.branchSegmentLength));
-  
-  const perpX = -dy / dist;
-  const perpY = dx / dist;
-
-  ctx.beginPath();
-  ctx.moveTo(startX, startY);
-
-  for (let j = 1; j <= segments; j++) {
-    const t = j / segments;
-    let nx = startX + dx * t;
-    let ny = startY + dy * t;
-    
-    if (j !== segments) {
-      const noise = (Math.random() - 0.5) * CONFIG.branchNoise;
-      nx += perpX * noise;
-      ny += perpY * noise;
-    }
-    
-    ctx.lineTo(nx, ny);
-
-    // 隨機再次分岔
-    if (j !== segments && Math.random() < CONFIG.subBranchChance) {
-      const newAngle = angle + (Math.random() - 0.5) * 1.0;
-      // 這裡簡化實作
-    }
-  }
-
-  ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-  ctx.lineWidth = depth * 0.6;
-  ctx.stroke();
-};
-
 // 遞迴繪製樹狀分岔
 const drawBranchRecursive = (ctx: CanvasRenderingContext2D, startX: number, startY: number, angle: number, length: number, depth: number, opacity: number) => {
   if (depth === 0 || length < 5) return;

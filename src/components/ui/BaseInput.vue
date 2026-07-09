@@ -3,6 +3,10 @@ import { ref, computed } from 'vue';
 import type { BaseInputProps } from '@/types/ui';
 import { Eye, EyeOff } from 'lucide-vue-next';
 
+defineOptions({
+  inheritAttrs: false,
+});
+
 const props = withDefaults(defineProps<BaseInputProps>(), {
   type: 'text',
   disabled: false,
@@ -43,6 +47,7 @@ const containerClasses = computed(() => {
     
     <div :class="['flex items-center overflow-hidden w-full relative h-[45px]', containerClasses]">
       <input
+        v-bind="$attrs"
         :type="inputType"
         :value="modelValue"
         @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"

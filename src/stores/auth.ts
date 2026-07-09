@@ -58,6 +58,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // 快取住的驗證 Promise：確保帶著舊 token 進站時，路由守衛能等待驗證結果，
+  // 而不是只看 localStorage 有沒有 token 就放行（避免閃進受保護頁面才被踢出）
+  let profileCheckPromise: Promise<void> | null = null;
+
+  function ensureAuthReady() {
+    if (!token.value) return Promise.resolve();
+    if (!profileCheckPromise) {
+      profileCheckPromise = fetchUserProfile().catch(() => { });
+    }
+    return profileCheckPromise;
+  }
+
   async function generate2FA() {
     const response = await authApi.generate2FA();
     return response.data; // { secret, provisioning_uri }
@@ -93,11 +105,6 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token');
   }
 
-  // Automatically fetch profile if token exists on load
-  if (token.value && !user.value) {
-    fetchUserProfile().catch(() => { });
-  }
-
   return {
     user,
     token,
@@ -112,6 +119,7 @@ export const useAuthStore = defineStore('auth', () => {
     disable2FA,
     changePassword,
     fetchUserProfile,
+    ensureAuthReady,
     logout
   };
 });

@@ -42,7 +42,7 @@ export interface UploadTask {
   totalChunks: number;
   lastModified: number;
   progress: number; // 0 - 100
-  status: 'waiting_for_file' | 'checking' | 'uploading' | 'finalizing' | 'success' | 'failed' | 'paused';
+  status: 'waiting_for_file' | 'checking' | 'uploading' | 'finalizing' | 'success' | 'failed' | 'paused' | 'canceled';
   uploadedChunks: number[];
   cancelSource?: any; // 用於取消 Axios 請求的 CancelTokenSource
 }

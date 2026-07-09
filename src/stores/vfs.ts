@@ -343,9 +343,12 @@ export const useVfsStore = defineStore('vfs', () => {
       const activeProgressMap: Record<number, number> = {};
       let hasError = false; // 發生錯誤時標記，以中斷其他 Worker
 
+      // 獨立函式讀取最新狀態：避免 TS 誤將 await 前後的 task.status 視為同一次窄化結果
+      const isTaskAborted = () => task.status === 'paused' || task.status === 'canceled';
+
       const worker = async () => {
         while (pendingChunks.length > 0 && !hasError) {
-          if ((task.status as string) === 'paused' || (task.status as string) === 'canceled') return;
+          if (isTaskAborted()) return;
 
           const i = pendingChunks.shift()!;
           const start = i * CHUNK_SIZE;
@@ -354,9 +357,9 @@ export const useVfsStore = defineStore('vfs', () => {
 
           let retries = 3;
           let success = false;
-          
+
           while (retries > 0 && !success && !hasError) {
-            if ((task.status as string) === 'paused' || (task.status as string) === 'canceled') return;
+            if (isTaskAborted()) return;
             try {
               await vfsApi.uploadChunk(
                 uploadId,
@@ -556,7 +559,7 @@ export const useVfsStore = defineStore('vfs', () => {
       task.cancelSource.cancel('User canceled the upload');
     }
 
-    task.status = 'canceled' as any;
+    task.status = 'canceled';
 
     // 2. 呼叫後端 cancel
     if (task.uploadId) {
