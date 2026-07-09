@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 import asyncio
 from datetime import datetime, timezone
@@ -35,6 +36,8 @@ from app.core.exceptions import (
     UploadSessionNotFoundError,
     UploadSessionValidationError,
 )
+
+logger = logging.getLogger("vfs_service")
 
 
 class VFSService:
@@ -155,7 +158,7 @@ class VFSService:
                 try:
                     cached_root_id = await self.redis_client.get(root_cached_key)
                 except Exception as e:
-                    print(f"[VFS Cache Error] Failed to get root cached ID: {e}")
+                    logger.error(f"[VFS Cache Error] Failed to get root cached ID: {e}")
                     use_cache = False  # 發生異常時，本次執行關閉快取
 
             if use_cache and cached_root_id:
@@ -167,7 +170,7 @@ class VFSService:
                     try:
                         await self.redis_client.set(root_cached_key, target_id)
                     except Exception as e:
-                        print(f"[VFS Cache Error] Failed to set root cached ID: {e}")
+                        logger.error(f"[VFS Cache Error] Failed to set root cached ID: {e}")
                         use_cache = False
         else:
             target_id = folder_id
@@ -180,7 +183,7 @@ class VFSService:
                 if cached_json:
                     return json.loads(cached_json)
             except Exception as e:
-                print(f"[VFS Cache Error] Failed to read browse cache: {e}")
+                logger.error(f"[VFS Cache Error] Failed to read browse cache: {e}")
                 use_cache = False
 
         # 3. 快取未命中：讀取資料庫
@@ -193,7 +196,7 @@ class VFSService:
                         root_cached_key = f"vfs:cache:root_folder_id:{owner_id}"
                         await self.redis_client.delete(root_cached_key)
                     except Exception as e:
-                        print(f"[VFS Cache Error] Failed to delete invalid root cache: {e}")
+                        logger.error(f"[VFS Cache Error] Failed to delete invalid root cache: {e}")
                         use_cache = False
                 root = await self.get_or_create_root(owner_id)
                 target_id = root.id
@@ -201,7 +204,7 @@ class VFSService:
                     try:
                         await self.redis_client.set(root_cached_key, target_id)
                     except Exception as e:
-                        print(f"[VFS Cache Error] Failed to reset root cached ID: {e}")
+                        logger.error(f"[VFS Cache Error] Failed to reset root cached ID: {e}")
                         use_cache = False
                 current_folder = await self.get_folder_by_id(target_id, owner_id)
                 if not current_folder:
@@ -248,7 +251,7 @@ class VFSService:
                     ex=settings.VFS_DIRECTORY_CACHE_TTL
                 )
             except Exception as e:
-                print(f"[VFS Cache Error] Failed to write browse cache: {e}")
+                logger.error(f"[VFS Cache Error] Failed to write browse cache: {e}")
 
         return response_dict
 
@@ -671,8 +674,16 @@ class VFSService:
         if chunk_index < 0 or chunk_index >= session.total_chunks:
             raise UploadSessionValidationError(f"無效的分塊索引：{chunk_index}，總分塊數為：{session.total_chunks}")
 
-        # 4. 寫入實體暫存 (隨機寫入)
+        # 3.5. 校驗分塊實際 byte 長度是否符合預期 (末塊為剩餘量，其餘固定為 chunk_size)
         offset = chunk_index * session.chunk_size
+        is_last_chunk = chunk_index == session.total_chunks - 1
+        expected_len = session.total_size - offset if is_last_chunk else session.chunk_size
+        if len(chunk_data) != expected_len:
+            raise UploadSessionValidationError(
+                f"分塊 {chunk_index} 長度不符：預期 {expected_len} bytes，實際收到 {len(chunk_data)} bytes"
+            )
+
+        # 4. 寫入實體暫存 (隨機寫入)
         await self.storage.save_chunk(upload_id, offset, chunk_data)
 
         # 5. 將已上傳的分塊寫入 Redis 追蹤進度，設定 24H 過期

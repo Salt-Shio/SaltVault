@@ -5,6 +5,13 @@
 2. 註冊 Middleware (警衛)
 3. 掛載 API 路由 (專櫃)
 """
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import asyncio

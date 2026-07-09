@@ -5,7 +5,7 @@ VFS 數據傳輸模型 (VFS Schemas)
 2. 進行資料型別驗證與轉換
 3. 提供前端導航所需的 Breadcrumb 結構
 """
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
@@ -105,7 +105,7 @@ class UploadInitRequest(BaseModel):
     """
     filename: str
     total_size: int
-    chunk_size: int
+    chunk_size: int = Field(gt=0)
     last_modified: int
     target_folder_id: Optional[str] = None
 

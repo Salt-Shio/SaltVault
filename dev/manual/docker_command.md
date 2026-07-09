@@ -1,3 +1,6 @@
+0. **本機測試（Windows/任何平台）** vs **正式部署（Linux）**：`tailscale`、`npm` 這兩個 service 掛了 `profiles: ["deploy"]`，只有 Linux 上的 Tailscale 網路穿透才需要它們。
+   - 本機測試：`docker-compose up --build -d`，只會啟動 `server`、`redis`（後端），前端另外用 `npm run dev` 啟動，走 Vite dev server 的熱重載。`web`（打包版前端）預設沒有對外開 port，本機用不到。
+   - Linux 正式部署（要帶上 tailscale/npm）：`docker compose --profile deploy up --build -d`
 1. `docker-compose up --build -d`: 啟動機器
 2. `docker-compose logs server`: 用來除錯
 3. `docker-compose restart server`: 重啟 server

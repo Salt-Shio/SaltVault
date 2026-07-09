@@ -15,6 +15,10 @@ from sqlalchemy.future import select
 from app.models import User
 from app.security import hasher, otp, jwt
 
+# 帳號不存在時仍用這組假雜湊值跑一次驗證運算，讓耗時與「帳號存在但密碼錯」一致，
+# 避免攻擊者用回應時間差枚舉出哪些帳號存在
+_DUMMY_PASSWORD_HASH = hasher.get_password_hash("dummy-password-for-timing-safety")
+
 class AuthService:
     """
     身分驗證業務邏輯層
@@ -58,9 +62,15 @@ class AuthService:
         # 1. 尋找使用者
         result = await self.db.execute(select(User).where(User.username == username))
         user = result.scalars().first()
-        
-        # 2. 驗證密碼
-        if not user or not hasher.verify_password(password, user.hashed_password):
+
+        # 2. 驗證密碼 (帳號不存在時仍對假雜湊值跑一次驗證，避免 timing side-channel)
+        if user:
+            password_valid = hasher.verify_password(password, user.hashed_password)
+        else:
+            hasher.verify_password(password, _DUMMY_PASSWORD_HASH)
+            password_valid = False
+
+        if not user or not password_valid:
             from app.core.exceptions import AuthenticationError
             raise AuthenticationError("帳號或密碼錯誤")
         

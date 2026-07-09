@@ -60,7 +60,6 @@ graph TD
 
     %% 第二層：具體業務端點 (Features)
     subgraph Layer_2 [2. 具體功能端點]
-        direction LR
         subgraph Auth_Endpoints [認證管理]
             EP_Register[註冊帳號]
             EP_Login[登入介面]
