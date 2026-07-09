@@ -128,7 +128,7 @@ const handleLegalAccept = async () => {
       @close="handleLegalDecline"
     >
       <div class="max-w-none text-white text-lg">
-        <p class="mb-4">歡迎使用 Salty File Explorer。在您開始使用本服務前，請仔細閱讀以下條款：</p>
+        <p class="mb-4">歡迎使用 Salt Vault。在您開始使用本服務前，請仔細閱讀以下條款：</p>
         <ul class="list-decimal pl-6 flex flex-col gap-3">
           <li>本服務僅供合法用途使用。</li>
           <li>使用者對其上傳的任何內容負全部法律責任。</li>

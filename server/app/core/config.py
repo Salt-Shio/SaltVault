@@ -14,7 +14,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     # 基本設定
-    APP_NAME: str = os.getenv("APP_NAME", "FileExplorer")
+    APP_NAME: str = os.getenv("APP_NAME", "SaltVault")
     
     # 安全設定
     SECRET_KEY: str = os.getenv("SECRET_KEY")

@@ -41,7 +41,7 @@ const currentRouteName = computed(() => {
         <!-- Logo 結合 Monospace 與閃爍游標 -->
         <router-link to="/" class="text-4xl font-mono font-bold hover:text-white transition-all duration-300 flex items-center group">
           <span class="text-mono-500 mr-4 font-normal group-hover:text-mono-400">&gt;</span>
-          <span class="text-mono-200 tracking-wider uppercase group-hover:text-white group-hover:[text-shadow:0_0_15px_rgba(255,255,255,0.4)]">Salty_File_Explore</span>
+          <span class="text-mono-200 tracking-wider uppercase group-hover:text-white group-hover:[text-shadow:0_0_15px_rgba(255,255,255,0.4)]">Salt_Vault</span>
           <span class="animate-terminal-blink ml-1 font-normal">_</span>
         </router-link>
       </div>

@@ -5,7 +5,7 @@
 ---
 
 ## 🟢 Step 1: 基礎網路打通 (Tailscale)
-首先，我們要先確保你的伺服器（架設 File Explorer 的那台電腦）和你的筆電/手機，都在同一個虛擬區網內。
+首先，我們要先確保你的伺服器（架設 SaltVault 的那台電腦）和你的筆電/手機，都在同一個虛擬區網內。
 
 1. **伺服器端安裝**：在伺服器上下載並安裝 Tailscale，登入你的帳號。
 2. **獲取私有 IP**：在伺服器上打開 Tailscale，記下分配給這台機器的 IP（通常開頭是 `100.x.x.x`）。這非常重要，這就是我們未來的專屬連線地址。
@@ -67,7 +67,7 @@
 ---
 
 ## 🟢 Step 4: 申請 HTTPS 憑證與設定代理
-這是最神奇的一步，我們要用剛剛的 Token 自動拿憑證，並把網域對應到我們的 File Explorer。
+這是最神奇的一步，我們要用剛剛的 Token 自動拿憑證，並把網域對應到我們的 SaltVault。
 
 1. **申請憑證 (DNS-01 挑戰)**：
    - 在 NPM 後台，點擊上方選單的 **「SSL Certificates」** -> **「Add SSL Certificate」** -> **「Let's Encrypt」**。
@@ -83,8 +83,8 @@
    - **[Details 頁籤]**：
      - **Domain Names**：`files.yourdomain.com`
      - **Scheme**：`http`
-     - **Forward Hostname / IP**：填入你 File Explorer 的伺服器 IP（如果 NPM 跟 File Explorer 在同一台電腦上，填伺服器的區域網路 IP，例如 `192.168.1.100` 或 Docker Gateway IP，**不要填 `localhost` 或 `127.0.0.1`**，因為在 Docker 裡 localhost 指的是容器自己），補充: 這裡可以填 Docker 容器名稱
-     - **Forward Port**：填入 File Explorer 的埠號（例如 `8000`）。
+     - **Forward Hostname / IP**：填入你 SaltVault 的伺服器 IP（如果 NPM 跟 SaltVault 在同一台電腦上，填伺服器的區域網路 IP，例如 `192.168.1.100` 或 Docker Gateway IP，**不要填 `localhost` 或 `127.0.0.1`**，因為在 Docker 裡 localhost 指的是容器自己），補充: 這裡可以填 Docker 容器名稱
+     - **Forward Port**：填入 SaltVault 的埠號（例如 `8000`）。
      - 打勾 `Block Common Exploits` 與 `Websockets Support`。
    - **[SSL 頁籤]**：
      - SSL Certificate 下拉選擇你剛剛申請好的憑證。
@@ -102,11 +102,11 @@
 ---
 
 ## 🟢 Step 5: 測試與收尾
-現在，確認你的筆電或手機**有打開 Tailscale**，在瀏覽器輸入 `https://files.yourdomain.com`，你應該就能看到閃亮的綠色鎖頭，並且直接進入你的 File Explorer 了！
+現在，確認你的筆電或手機**有打開 Tailscale**，在瀏覽器輸入 `https://files.yourdomain.com`，你應該就能看到閃亮的綠色鎖頭，並且直接進入你的 SaltVault 了！
 
 > [!TIP]
 > **下一步我們該做什麼？**
 > 這份指南裡的 Step 1 ~ Step 4 是你可以自己先動手設定的環境基礎。
 > 
-> 等你把網域和 Nginx Proxy Manager 搞定後，你會需要把我們這套 File Explorer **打包成正式版的 Docker 容器**（目前我們還是用 `npm run dev` 在開發模式跑）。
+> 等你把網域和 Nginx Proxy Manager 搞定後，你會需要把我們這套 SaltVault **打包成正式版的 Docker 容器**（目前我們還是用 `npm run dev` 在開發模式跑）。
 > **到時候我可以幫你寫專案專屬的 `Dockerfile` 和啟動腳本！**

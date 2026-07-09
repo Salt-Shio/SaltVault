@@ -19,7 +19,7 @@
 ## 3. Proxy Host 核心設定原理
 
 ### Forward Hostname (Docker 內部 DNS)
-* **設定值**：`file-explorer-server` (Port `8000`)
+* **設定值**：`salt-vault-server` (Port `8000`)
 * **原理**：我們不需要綁定實體的內部 IP (如 `192.168.x.x`)，而是直接使用 Docker Compose 中定義的容器名稱。這是因為 Docker 在啟動容器時，會建立一個與世隔絕的區域網路 (Bridge Network)，並內建一台 DNS 伺服器。這台 DNS 會自動將容器名稱解析為對應的動態內部 IP，實現完美的「服務發現 (Service Discovery)」。
 
 ### Scheme 設定為 `http` (SSL 卸載 / SSL Offloading)

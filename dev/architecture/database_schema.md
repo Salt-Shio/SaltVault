@@ -1,6 +1,6 @@
 # Database Schema (ER Diagram)
 
-本文件描述 File Explorer 系統的資料庫實體關係圖 (Entity Relationship Diagram)。
+本文件描述 SaltVault 系統的資料庫實體關係圖 (Entity Relationship Diagram)。
 
 ```mermaid
 erDiagram

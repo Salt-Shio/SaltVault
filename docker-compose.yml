@@ -3,14 +3,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: file-explorer-web
+    container_name: salt-vault-web
     restart: always
     depends_on:
       - server
 
   server:
     build: ./server
-    container_name: file-explorer-server
+    container_name: salt-vault-server
     restart: always
     ports:
       - "8000:8000"
@@ -24,14 +24,14 @@ services:
 
   redis:
     image: redis:alpine
-    container_name: file-explorer-redis
+    container_name: salt-vault-redis
     restart: always
     expose:
       - "6379"
 
   tailscale:
     image: tailscale/tailscale:latest
-    container_name: file-explorer-tailscale
+    container_name: salt-vault-tailscale
     profiles: ["deploy"]         # 只在 Linux 正式部署時啟用，本機測試用 `docker compose up` 不會帶到
     hostname: file-server-linux  # 顯示在 Tailscale 後台的機器名稱，可自訂
     network_mode: host           # 關鍵！讓 Tailscale 直接接管主機網卡
@@ -49,7 +49,7 @@ services:
 
   npm:
     image: 'jc21/nginx-proxy-manager:latest'
-    container_name: file-explorer-npm
+    container_name: salt-vault-npm
     profiles: ["deploy"]         # 只在 Linux 正式部署時啟用，本機測試用 `docker compose up` 不會帶到
     restart: unless-stopped
     ports:

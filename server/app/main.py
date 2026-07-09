@@ -50,7 +50,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="File Explorer",
+    title="Salt Vault",
     lifespan=lifespan,
     # 1. 整合 Middleware
     middleware=[
@@ -67,7 +67,7 @@ app.include_router(api_router, prefix="/api")
 
 @app.get("/")
 async def root():
-    return {"message": "Secure File Explorer API is running"}
+    return {"message": "Secure Salt Vault API is running"}
 
 if __name__ == "__main__":
     import uvicorn
