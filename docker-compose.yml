@@ -1,3 +1,5 @@
+name: salt-vault # 手動釘死 Compose project name，避免因為專案資料夾改名/搬家導致 down/up 抓不到既有容器
+
 services:
   web:
     build:
