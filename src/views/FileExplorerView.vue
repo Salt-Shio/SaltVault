@@ -22,6 +22,9 @@ import {
 
 const vfsStore = useVfsStore();
 
+// 手機/窄螢幕分頁籤狀態（lg 以上不使用，維持三欄並排）
+const activeMobileTab = ref<'tree' | 'files' | 'transfers'>('files');
+
 // Modal 狀態控制
 const showMkdirModal = ref(false);
 const showRenameModal = ref(false);
@@ -316,11 +319,42 @@ const getStatusLabel = (status: string) => {
         </button>
       </div>
 
+      <!-- 分頁籤（lg 以上隱藏，改用桌面三欄並排；768~1024px 的筆電窄視窗兩個固定 300px 側欄會把中間欄擠沒，所以延用分頁籤到 lg） -->
+      <div class="flex lg:hidden w-full gap-2 shrink-0">
+        <button
+          @click="activeMobileTab = 'tree'"
+          :class="[
+            'flex-1 h-10 rounded-md text-xs font-mono font-bold tracking-widest uppercase transition-colors border',
+            activeMobileTab === 'tree' ? 'bg-mono-50 text-mono-950 border-transparent' : 'bg-mono-900 text-mono-400 border-mono-700'
+          ]"
+        >
+          目錄
+        </button>
+        <button
+          @click="activeMobileTab = 'files'"
+          :class="[
+            'flex-1 h-10 rounded-md text-xs font-mono font-bold tracking-widest uppercase transition-colors border',
+            activeMobileTab === 'files' ? 'bg-mono-50 text-mono-950 border-transparent' : 'bg-mono-900 text-mono-400 border-mono-700'
+          ]"
+        >
+          檔案
+        </button>
+        <button
+          @click="activeMobileTab = 'transfers'"
+          :class="[
+            'flex-1 h-10 rounded-md text-xs font-mono font-bold tracking-widest uppercase transition-colors border',
+            activeMobileTab === 'transfers' ? 'bg-mono-50 text-mono-950 border-transparent' : 'bg-mono-900 text-mono-400 border-mono-700'
+          ]"
+        >
+          傳輸
+        </button>
+      </div>
+
       <!-- 主要分欄瀏覽區域 -->
-      <div class="flex flex-col md:flex-row gap-8 w-full h-[80vh]">
-        
+      <div class="flex flex-col lg:flex-row gap-8 w-full h-[80vh]">
+
         <!-- 左欄：樹狀目錄導航 -->
-        <div class="bg-mono-950/50 md:w-[380px] shrink-0 flex flex-col overflow-y-auto border border-mono-700 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] relative">
+        <div :class="[activeMobileTab === 'tree' ? 'flex' : 'hidden', 'lg:flex', 'bg-mono-950/50 lg:w-[300px] shrink-0 flex-col overflow-y-auto border border-mono-700 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] relative']">
           <div class="h-[70px] px-6 flex items-center border-b border-mono-800 bg-mono-900/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
             <h2 class="font-mono text-mono-400 text-sm tracking-widest uppercase">Directory Tree</h2>
           </div>
@@ -331,10 +365,11 @@ const getStatusLabel = (status: string) => {
             </div>
             
             <!-- 遞迴目錄樹起點 -->
-            <VfsTreeItem 
-              v-else-if="rootFolder" 
-              :folder="rootFolder" 
+            <VfsTreeItem
+              v-else-if="rootFolder"
+              :folder="rootFolder"
               :depth="0"
+              @navigate="activeMobileTab = 'files'"
             />
             
             <div v-else class="text-mono-500 text-sm italic">
@@ -344,30 +379,30 @@ const getStatusLabel = (status: string) => {
         </div>
 
         <!-- 右欄：詳細列表操作區 -->
-        <div class="flex-grow flex flex-col h-full bg-mono-950/50 relative overflow-hidden rounded-xl border border-mono-700 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-          
+        <div :class="[activeMobileTab === 'files' ? 'flex' : 'hidden', 'lg:flex', 'flex-grow flex-col h-full bg-mono-950/50 relative overflow-hidden rounded-xl border border-mono-700 shadow-[0_4px_20px_rgba(0,0,0,0.5)]']">
+
           <!-- 當前目錄標題與操作欄 -->
-          <div class="bg-mono-900/80 backdrop-blur-md h-[70px] px-6 flex items-center justify-between shrink-0 border-b border-mono-700 gap-4 sticky top-0 z-10 shadow-sm">
+          <div class="bg-mono-900/80 backdrop-blur-md h-[60px] md:h-[70px] px-4 md:px-6 flex items-center justify-between shrink-0 border-b border-mono-700 gap-4 sticky top-0 z-10 shadow-sm">
             <p class="font-mono font-medium text-xl text-mono-50 truncate flex-grow [text-shadow:0_0_8px_rgba(255,255,255,0.2)]">
               {{ pathDisplay }}
             </p>
-            
+
             <!-- 操作按鈕組 -->
             <div class="flex items-center gap-3 shrink-0">
-              <button 
+              <button
                 @click="openMkdirModal"
-                class="bg-mono-800 text-mono-50 hover:bg-mono-700 hover:text-white border border-mono-600 rounded-md px-4 py-2 text-sm font-bold flex items-center gap-2 cursor-pointer transition-all shadow-sm active:scale-95"
+                class="bg-mono-800 text-mono-50 hover:bg-mono-700 hover:text-white border border-mono-600 rounded-md px-3 md:px-4 py-2 text-sm font-bold flex items-center gap-2 cursor-pointer transition-all shadow-sm active:scale-95"
               >
                 <Plus class="w-4 h-4" />
-                新建資料夾
+                <span class="hidden xl:inline">新建資料夾</span>
               </button>
 
-              <button 
+              <button
                 @click="triggerFileInput"
-                class="bg-mono-50 text-mono-900 hover:bg-white border border-transparent rounded-md px-4 py-2 text-sm font-bold flex items-center gap-2 cursor-pointer transition-all shadow-[0_0_10px_rgba(255,255,255,0.2)] active:scale-95"
+                class="bg-mono-50 text-mono-900 hover:bg-white border border-transparent rounded-md px-3 md:px-4 py-2 text-sm font-bold flex items-center gap-2 cursor-pointer transition-all shadow-[0_0_10px_rgba(255,255,255,0.2)] active:scale-95"
               >
                 <UploadIcon class="w-4 h-4" />
-                上傳檔案
+                <span class="hidden xl:inline">上傳檔案</span>
               </button>
               <input 
                 type="file" 
@@ -426,11 +461,11 @@ const getStatusLabel = (status: string) => {
                   <span>{{ folder.name }}</span>
                 </span>
                 
-                <span class="shrink-0 text-mono-500 text-xs font-mono group-hover:hidden block">
+                <span class="shrink-0 text-mono-500 text-xs font-mono hidden lg:block lg:group-hover:hidden">
                   {{ formatDate(folder.updated_at) }}
                 </span>
 
-                <div class="hidden group-hover:flex items-center gap-2" @click.stop>
+                <div class="flex lg:hidden lg:group-hover:flex items-center gap-2" @click.stop>
                   <button @click="openRenameModal(folder.id, 'folder', folder.name)" class="p-1.5 hover:bg-mono-700 rounded-md text-mono-400 hover:text-white transition-colors cursor-pointer"><Pencil class="w-4 h-4" /></button>
                   <button @click="openMoveModal(folder.id, 'folder', folder.name)" class="p-1.5 hover:bg-mono-700 rounded-md text-mono-400 hover:text-white transition-colors cursor-pointer"><FolderInput class="w-4 h-4" /></button>
                   <button @click="openDeleteModal(folder.id, 'folder', folder.name)" class="p-1.5 hover:bg-mono-700 rounded-md text-mono-400 hover:text-white transition-colors cursor-pointer"><Trash2 class="w-4 h-4" /></button>
@@ -448,11 +483,11 @@ const getStatusLabel = (status: string) => {
                   <span>{{ file.name }}</span>
                 </span>
 
-                <span class="shrink-0 text-mono-500 text-xs font-mono group-hover:hidden block">
+                <span class="shrink-0 text-mono-500 text-xs font-mono hidden lg:block lg:group-hover:hidden">
                   {{ formatDate(file.updated_at) }}
                 </span>
 
-                <div class="hidden group-hover:flex items-center gap-2" @click.stop>
+                <div class="flex lg:hidden lg:group-hover:flex items-center gap-2" @click.stop>
                   <button 
                     @click="handleDownloadFile(file.id, file.name)"
                     :disabled="downloadingFiles[file.id]"
@@ -479,7 +514,7 @@ const getStatusLabel = (status: string) => {
         </div>
 
         <!-- 第三欄：傳輸管理 -->
-        <div class="bg-mono-950/50 md:w-[380px] shrink-0 flex flex-col border border-mono-700 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] relative overflow-hidden">
+        <div :class="[activeMobileTab === 'transfers' ? 'flex' : 'hidden', 'lg:flex', 'bg-mono-950/50 lg:w-[300px] shrink-0 flex-col border border-mono-700 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] relative overflow-hidden']">
           <div class="h-[70px] px-6 flex items-center justify-between border-b border-mono-800 bg-mono-900/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
             <h2 class="font-mono text-mono-400 text-sm tracking-widest uppercase">Transfers</h2>
             <button 

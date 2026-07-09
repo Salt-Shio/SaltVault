@@ -11,6 +11,10 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const emit = defineEmits<{
+  (e: 'navigate'): void;
+}>();
+
 const vfsStore = useVfsStore();
 
 // 判斷當前資料夾是否展開
@@ -26,6 +30,7 @@ const cachedContent = computed(() => vfsStore.directoryCache[props.folder.id]);
 const handleFolderClick = async (e: Event) => {
   e.stopPropagation();
   await vfsStore.fetchDirectory(props.folder.id);
+  emit('navigate');
 };
 
 // 點擊展開符號時：切換展開狀態
@@ -62,11 +67,12 @@ const handleToggleExpand = (e: Event) => {
     <!-- 子目錄與子檔案遞迴展示 -->
     <div v-if="isExpanded && cachedContent" class="flex flex-col relative before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[1px] before:bg-mono-800 before:ml-[18px]">
       <!-- 渲染子資料夾 -->
-      <VfsTreeItem 
-        v-for="subf in cachedContent.folders" 
+      <VfsTreeItem
+        v-for="subf in cachedContent.folders"
         :key="subf.id"
-        :folder="subf" 
-        :depth="depth + 1" 
+        :folder="subf"
+        :depth="depth + 1"
+        @navigate="emit('navigate')"
       />
 
       <!-- 渲染子檔案 (唯讀展示) -->
