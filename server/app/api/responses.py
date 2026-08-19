@@ -31,12 +31,18 @@ class MonitoredFileResponse(FileResponse):
 
     async def _heartbeat(self):
         """每隔 heartbeat_interval 秒，把憑證 TTL 刷新回滿額，只要這個迴圈還在跑就代表連線仍在傳送資料"""
+        tick = 0
         while True:
             await asyncio.sleep(self._heartbeat_interval)
+            tick += 1
             await self._redis_client.expire(self._ticket_key, self._ticket_ttl)
+            logger.info(
+                f"[Download][DEBUG] Heartbeat 第 {tick} 次續命 ticket_key={self._ticket_key} "
+                f"延長至 {self._ticket_ttl} 秒"
+            )
 
     async def __call__(self, scope, receive, send):
-        logger.info("[Download] 連線建立，開始檔案發送。")
+        logger.info(f"[Download] 連線建立，開始檔案發送。ticket_key={self._ticket_key}")
 
         heartbeat_task = None
         if self._redis_client and self._ticket_key and self._heartbeat_interval:
@@ -45,7 +51,7 @@ class MonitoredFileResponse(FileResponse):
         try:
             await super().__call__(scope, receive, send)
         except Exception as e:
-            logger.warning(f"[Download] 檔案發送中途連線中斷。詳情: {str(e)}")
+            logger.warning(f"[Download] 檔案發送中途連線中斷。ticket_key={self._ticket_key} 詳情: {str(e)}")
             raise
         finally:
             if heartbeat_task:
@@ -54,4 +60,4 @@ class MonitoredFileResponse(FileResponse):
                     await heartbeat_task
                 except asyncio.CancelledError:
                     pass
-            logger.info("[Download] 連線結束/已關閉。")
+            logger.info(f"[Download] 連線結束/已關閉。ticket_key={self._ticket_key}")

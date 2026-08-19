@@ -977,19 +977,29 @@ class VFSService:
         ticket_key = f"vfs:ticket:download:{ticket}"
         active_conns_key = f"vfs:ticket:active_conns:{ticket}"
 
+        # [DEBUG] 驗證前先探測目前 ticket_key 實際剩餘 TTL，用來判斷是否為過期問題 (-2 代表已不存在)
+        debug_ttl_before = await self.redis_client.ttl(ticket_key)
+        logger.info(f"[DownloadTicket][DEBUG] 驗證開始 ticket={ticket} file_id={file_id} ticket_key剩餘TTL={debug_ttl_before}")
+
         # 1. 驗證憑證存在且未過期
         ticket_data_raw = await self.redis_client.get(ticket_key)
         if not ticket_data_raw:
+            logger.warning(f"[DownloadTicket][DEBUG] 驗證失敗：ticket_key 不存在/已過期 ticket={ticket}")
             raise InvalidTicketError("無效或已過期的下載憑證")
 
         # 2. 解析憑證內容
         try:
             ticket_data = json.loads(ticket_data_raw)
         except Exception:
+            logger.warning(f"[DownloadTicket][DEBUG] 驗證失敗：憑證資料解析錯誤 ticket={ticket} raw={ticket_data_raw!r}")
             raise InvalidTicketError("憑證資料解析錯誤")
 
         # 3. 確認憑證指派的檔案與請求一致
         if ticket_data.get("file_id") != file_id:
+            logger.warning(
+                f"[DownloadTicket][DEBUG] 驗證失敗：file_id 不符 ticket={ticket} "
+                f"憑證內file_id={ticket_data.get('file_id')} 請求file_id={file_id}"
+            )
             raise InvalidTicketError("下載憑證與檔案不符")
 
         owner_id = ticket_data.get("owner_id")
@@ -999,12 +1009,22 @@ class VFSService:
         if new_conn_count == 1:
             await self.redis_client.expire(active_conns_key, settings.DOWNLOAD_TICKET_TTL)
 
+        logger.info(
+            f"[DownloadTicket][DEBUG] 連線計數 ticket={ticket} "
+            f"count={new_conn_count}/{settings.DOWNLOAD_TICKET_MAX_REQUESTS}"
+        )
+
         # 5. 超過上限直接阻斷，不手動刪除或遞減，固定等 TTL 自動消亡
         if new_conn_count > settings.DOWNLOAD_TICKET_MAX_REQUESTS:
+            logger.warning(
+                f"[DownloadTicket][DEBUG] 驗證失敗：連線數超過上限 ticket={ticket} "
+                f"count={new_conn_count} 上限={settings.DOWNLOAD_TICKET_MAX_REQUESTS}"
+            )
             raise TicketRateLimitError("該憑證的下載請求次數已達上限")
 
         # 6. 通過驗證，先延長一次憑證壽命，確保銜接上後續傳送期間的 Heartbeat 續命 (詳見 MonitoredFileResponse)
         await self.redis_client.expire(ticket_key, settings.DOWNLOAD_TICKET_TTL)
+        logger.info(f"[DownloadTicket][DEBUG] 驗證通過，已延長 ticket_key TTL 至 {settings.DOWNLOAD_TICKET_TTL} 秒 ticket={ticket}")
 
         # 7. 呼叫既有業務邏輯校驗檔案狀態與磁碟完整性
         return await self.prepare_download(
