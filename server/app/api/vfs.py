@@ -13,6 +13,7 @@ from app.api.responses import MonitoredFileResponse
 from app.services.vfs_service import VFSService
 from app import schemas
 from app.models import User
+from app.core.config import settings
 from app.core.exceptions import NodeNotFoundError
 
 router = APIRouter()
@@ -255,10 +256,14 @@ async def download_file(
         "ETag": f'"{file_obj.hash_sha256}"'
     }
 
-    # 4. 回傳自訂的 MonitoredFileResponse 監控連線
+    # 4. 回傳自訂的 MonitoredFileResponse 監控連線，並帶入憑證資訊供傳送期間 Heartbeat 續命
     return MonitoredFileResponse(
         path=physical_path,
         filename=file_obj.name,
         media_type=file_obj.mime_type or "application/octet-stream",
-        headers=headers
+        headers=headers,
+        redis_client=service.redis_client,
+        ticket_key=f"vfs:ticket:download:{ticket}",
+        ticket_ttl=settings.DOWNLOAD_TICKET_TTL,
+        heartbeat_interval=settings.DOWNLOAD_TICKET_HEARTBEAT_INTERVAL
     )

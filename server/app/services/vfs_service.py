@@ -1003,7 +1003,10 @@ class VFSService:
         if new_conn_count > settings.DOWNLOAD_TICKET_MAX_REQUESTS:
             raise TicketRateLimitError("該憑證的下載請求次數已達上限")
 
-        # 6. 通過所有驗證後，呼叫既有業務邏輯校驗檔案狀態與磁碟完整性
+        # 6. 通過驗證，先延長一次憑證壽命，確保銜接上後續傳送期間的 Heartbeat 續命 (詳見 MonitoredFileResponse)
+        await self.redis_client.expire(ticket_key, settings.DOWNLOAD_TICKET_TTL)
+
+        # 7. 呼叫既有業務邏輯校驗檔案狀態與磁碟完整性
         return await self.prepare_download(
             file_id=file_id,
             owner_id=owner_id

@@ -43,8 +43,13 @@ class Settings(BaseSettings):
     REDIS_MAX_CONNECTIONS: int = int(os.getenv("REDIS_MAX_CONNECTIONS", 20))
 
     # 下載憑證相關參數 (VFS Download Ticket)
+    # DOWNLOAD_TICKET_TTL：憑證存活時間。核發後尚未被使用時，過了這段時間沒人用就自動失效 (防止連結被轉發濫用)；
+    # 開始下載後，靠 DOWNLOAD_TICKET_HEARTBEAT_INTERVAL 持續刷新回這個值，連線斷開後一樣是這段時間內沒重新連上就作廢
     DOWNLOAD_TICKET_TTL: int = int(os.getenv("DOWNLOAD_TICKET_TTL", 30))
     DOWNLOAD_TICKET_MAX_REQUESTS: int = int(os.getenv("DOWNLOAD_TICKET_MAX_REQUESTS", 4))
+    # 檔案傳送期間，每隔多少秒為憑證續命一次；必須明顯小於 DOWNLOAD_TICKET_TTL，
+    # 否則會在下一次續命前就先過期 (建議至少抓 TTL 的一半以下)
+    DOWNLOAD_TICKET_HEARTBEAT_INTERVAL: int = int(os.getenv("DOWNLOAD_TICKET_HEARTBEAT_INTERVAL", 10))
 
     # 檔案合併讀取緩衝區大小 (Byte，預設為 1MB)
     FILE_MERGE_BUFFER_SIZE: int = int(os.getenv("FILE_MERGE_BUFFER_SIZE", 1048576))
