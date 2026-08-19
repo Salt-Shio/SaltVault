@@ -29,3 +29,13 @@
 ### Force SSL 與 Cache Assets
 * **Force SSL**：這是在約束外部連線。若打開，NPM 只要收到 HTTP (Port 80) 的請求，就會自動回傳 `301 Redirect`，強制瀏覽器改用安全的 HTTPS (Port 443) 重新連線。
 * **Cache Assets**：這是 Nginx 的靜態資源快取。建議在開發期間保持**關閉**，避免程式碼更新後，瀏覽器卻依然讀取到 NPM 快取中的舊畫面，徒增除錯困難。正式上線後可開啟以提升載入速度。
+
+## 4. Advanced 分頁必要設定：`proxy_buffering off;`（⚠️ 手動設定，不受 git 版控）
+
+* **設定位置**：`nas.salt-shio.win` 這個 Proxy Host → `Advanced` 分頁 → Custom Nginx Configuration，填入：
+  ```nginx
+  proxy_buffering off;
+  ```
+* **為什麼需要**：下載大檔案時，後端會用一個 Redis ticket 搭配 Heartbeat 機制持續為下載連線續命（見 `server/app/api/responses.py` 的 `MonitoredFileResponse` 與 `server/app/core/config.py` 的 `DOWNLOAD_TICKET_TTL` / `DOWNLOAD_TICKET_HEARTBEAT_INTERVAL`）。若 NPM 這層維持預設的 `proxy_buffering on`，NPM 會把 `web` 容器吐出的整個檔案先整包收進自己的緩衝區，收完才斷開跟上游的連線——導致後端連線壽命遠短於瀏覽器實際下載所需的時間，Heartbeat 續命機制因此失去意義，ticket 會在下載途中就過期，造成大檔案下載到一半被判定憑證無效 (403)。
+* **這個設定沒辦法被 git 追蹤**：NPM 的 Proxy Host 設定存在它自己的 SQLite 資料庫 (`npm-data/`)，不是純文字設定檔，程式碼倉庫裡看不到。**如果之後重灌 NPM、搬遷伺服器、或重新建立這個 Proxy Host，一定要記得回來這裡補上這行設定**，不然下載大檔案的 bug 會原封不動地重現。
+* **對應的另一層**：Docker Compose 裡 `web` 容器自己的 `nginx.conf`（有受 git 版控）也對 `/api/vfs/download/` 這條路徑做了一樣的 `proxy_buffering off;` 設定，兩層要同時關閉才會完整生效，只關其中一層沒有用。
