@@ -42,6 +42,7 @@ services:
       - NET_RAW
     environment:
       - TS_STATE_DIR=/var/lib/tailscale # 強制將登入狀態寫入硬碟，避免變成免洗機器
+      - TS_USERSPACE=false              # 走核心模式（直接用 tailscale0 網卡，效能較好）；官方 image 此值預設為 true，且不會自動偵測 /dev/net/tun，必須顯式關閉
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
